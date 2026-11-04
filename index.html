@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gerai Hisana">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Database Gerai Hisana</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c8102e'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='700' font-size='20' text-anchor='middle' fill='white'%3EH%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Tata letak: app bar gelap di atas; kiri daftar gerai (kartu penuh tinggi), kanan detail atau peta.
+   HP: satu panel per layar (Daftar, Detail, Peta) dengan navigasi bawah. */
+:root{
+  --bg:#f0f2f6; --surface:#ffffff; --surface2:#f6f7fa; --ink:#111827; --mute:#5d6a7e; --line:#e2e6ee;
+  --accent:#c8102e; --accent-soft:#fdecef; --accent-ink:#ffffff;
+  --bar:#111827; --bar-ink:#f4f6fb; --bar-mute:#9aa6ba;
+  --ok:#0f7a55; --ok-soft:#e3f5ee; --warn:#9a5b00; --warn-soft:#fff3dc; --bad:#c0262d;
+  --shadow:0 1px 2px rgba(17,24,39,.05),0 4px 14px rgba(17,24,39,.05);
+  --f-body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1117; --surface:#151b24; --surface2:#1b2230; --ink:#e8edf5; --mute:#8e9bb0; --line:#263041;
+  --accent:#ff5d77; --accent-soft:#3b1c26; --accent-ink:#1d0a0f;
+  --bar:#0a0e14; --bar-ink:#eef2f9; --bar-mute:#7f8ba0;
+  --ok:#4cc79b; --ok-soft:#12352a; --warn:#f0b35a; --warn-soft:#352a16; --bad:#ff7b80; --shadow:none; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1117; --surface:#151b24; --surface2:#1b2230; --ink:#e8edf5; --mute:#8e9bb0; --line:#263041;
+  --accent:#ff5d77; --accent-soft:#3b1c26; --accent-ink:#1d0a0f;
+  --bar:#0a0e14; --bar-ink:#eef2f9; --bar-mute:#7f8ba0;
+  --ok:#4cc79b; --ok-soft:#12352a; --warn:#f0b35a; --warn-soft:#352a16; --bad:#ff7b80; --shadow:none; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);-webkit-text-size-adjust:100%}
+svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.num,.code,td.n{font-variant-numeric:tabular-nums}
+:is(input,select,button,a,.item,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* app bar */
+.bar{position:sticky;top:0;z-index:20;background:var(--bar);color:var(--bar-ink);
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.brand{min-width:0;line-height:1.2;overflow:hidden}
+.brand b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{color:var(--bar-mute);font-size:12px;white-space:nowrap}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--bar-mute);padding:5px 10px;border:1px solid rgba(255,255,255,.14);border-radius:999px;white-space:nowrap;min-width:0;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bar-mute);flex:none}
+.dot.live{background:#34d399}.dot.err{background:#f87171}
+.ibtn{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:transparent;color:var(--bar-ink);display:grid;place-items:center;cursor:pointer;flex:none}
+.ibtn:hover{background:rgba(255,255,255,.08)}
+.ibtn[disabled]{opacity:.5}
+.ibtn .sun{display:none}
+:root[data-theme="dark"] .ibtn .sun{display:block}:root[data-theme="dark"] .ibtn .moon{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ibtn .sun{display:block}:root:not([data-theme="light"]) .ibtn .moon{display:none}}
+@media(max-width:560px){.brand small{display:none}.bar-in{gap:10px}}
+@media(max-width:480px){.pill #meta{display:none}.pill{padding:9px;gap:0}}
+
+/* layout */
+.layout{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:16px;align-items:start;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);min-width:0}
+.side{position:sticky;top:72px;height:calc(100dvh - 88px);display:flex;flex-direction:column;overflow:hidden}
+.side-head{padding:14px 14px 10px;display:grid;gap:8px;border-bottom:1px solid var(--line)}
+.field{position:relative}
+.field svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--mute);pointer-events:none}
+input[type=search],input[type=password],input[type=text],select{font:inherit;width:100%;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.field input{padding-left:36px}
+select{appearance:auto}
+.stat{display:flex;justify-content:space-between;gap:8px;color:var(--mute);font-size:12px;padding:0 2px}
+.stat b{color:var(--ink);font-weight:600}
+#list{overflow:auto;flex:1;padding:6px;overscroll-behavior:contain}
+.item{display:flex;gap:11px;align-items:center;padding:9px 10px;border-radius:11px;cursor:pointer;border:1px solid transparent;min-width:0}
+.item:hover{background:var(--surface2)}
+.item[aria-selected=true]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 55%,transparent)}
+.av{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--line);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:12.5px;flex:none;letter-spacing:.02em}
+.item[aria-selected=true] .av{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.item .t{min-width:0}
+.item b{display:block;font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item small{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:12px;min-width:0}
+.item small span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.code{font-family:var(--f-mono);font-size:11.5px;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap;color:var(--ink)}
+.empty{color:var(--mute);text-align:center;padding:44px 18px}
+.empty h3{margin:0 0 6px;font-size:15px;color:var(--ink)}
+
+/* tombol */
+.btn{font:inherit;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.06)}
+.btn.sm{height:30px;padding:0 10px;font-size:12px}
+.btn[disabled]{opacity:.55;cursor:default}
+a{color:var(--accent)}
+.muted{color:var(--mute)}
+
+/* panel kanan */
+.main{display:grid;gap:14px;min-width:0}
+.seg{display:inline-flex;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;justify-self:start}
+.seg button{font:inherit;font-weight:600;font-size:13px;border:0;background:transparent;color:var(--mute);height:32px;padding:0 14px;border-radius:8px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:18px}
+.hero .av{width:56px;height:56px;border-radius:15px;font-size:19px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.hero-main{flex:1 1 260px;min-width:0}
+h2{margin:0 0 6px;font-size:21px;line-height:1.25;letter-spacing:-.015em;font-weight:700;overflow-wrap:anywhere;text-wrap:balance}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.chip.off{opacity:.7}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px}
+.sec{padding:16px;min-width:0}
+.sec.span{grid-column:1/-1}
+.sec h3{margin:0 0 12px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mute)}
+.sec h3 svg{color:var(--accent)}
+.kv{display:grid;grid-template-columns:minmax(0,104px) minmax(0,1fr);gap:9px 14px}
+.kv>:nth-child(odd){color:var(--mute)}
+.kv>*{overflow-wrap:anywhere}
+.docs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th{color:var(--mute);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+.role{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);white-space:nowrap}
+.role.ka{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.plat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.pf{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0;display:grid;gap:8px;align-content:start}
+.pf header{display:flex;align-items:center;gap:8px;font-weight:700}
+.pf header i{width:10px;height:10px;border-radius:50%;display:block}
+.pf .nm{font-size:13px;overflow-wrap:anywhere}
+.pf .id{font-family:var(--f-mono);font-size:12px;color:var(--mute);overflow-wrap:anywhere}
+.sens{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.sens form{display:flex;gap:8px;flex-wrap:wrap}
+.sens input{flex:1 1 180px;width:auto;letter-spacing:.25em}
+.msg{font-size:12.5px;margin-top:9px}.msg.bad{color:var(--bad)}
+.val{font-family:var(--f-mono);font-size:13px}
+.legend{color:var(--mute);font-size:12px}
+iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11px;margin-top:12px;background:var(--surface2);display:block}
+
+/* peta */
+.maphead{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px 0}
+.maphead h3{margin:0;font-size:15px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink)}
+#map{width:100%;height:calc(100dvh - 250px);min-height:420px;border-radius:12px;background:var(--surface2)}
+.mapwrap{padding:12px 16px 14px}
+.leaflet-container{font-family:var(--f-body)}
+.leaflet-popup-content{font:13px/1.5 var(--f-body)}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:60;max-width:min(92vw,420px);background:var(--bar);color:var(--bar-ink);padding:12px 16px;border-radius:12px;font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+#toast[hidden]{display:none}
+@media(min-width:900px){#toast{bottom:24px}}
+/* gerbang kode akses */
+#gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#gate[hidden]{display:none}
+.gatebox{width:min(100%,380px);padding:26px;text-align:center}
+.gatebox .logo{margin:0 auto 14px;width:46px;height:46px;font-size:24px;border-radius:12px}
+.gatebox h2{margin-bottom:4px}
+.gatebox form{display:grid;gap:10px;margin-top:16px;text-align:left}
+.gatebox label.rem{display:flex;gap:8px;align-items:center;color:var(--mute);font-size:12.5px}
+
+/* navigasi bawah (HP) */
+.nav{display:none}
+@media(max-width:899px){
+  .layout{grid-template-columns:minmax(0,1fr);padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .side{position:static;height:calc(100dvh - 150px);min-height:420px}
+  .app[data-view=list] .main{display:none}
+  .app:not([data-view=list]) .side{display:none}
+  .seg{display:none}
+  #map{height:calc(100dvh - 270px)}
+  .nav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+  .nav button{font:inherit;font-size:11.5px;font-weight:600;border:0;background:transparent;color:var(--mute);display:grid;justify-items:center;gap:2px;padding:6px 0;border-radius:10px;cursor:pointer}
+  .nav button svg{width:20px;height:20px}
+  .nav button[aria-current=page]{color:var(--accent)}
+}
+@media(max-width:520px){.hero{padding:14px}.hero .av{width:46px;height:46px;font-size:16px}h2{font-size:18px}.sec{padding:14px}}
+@media(min-width:900px){.navonly{display:none}}
+@media (prefers-reduced-motion:no-preference){.item,.btn,.seg button,.ibtn{transition:background-color .12s,border-color .12s,color .12s}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24"><path d="m3 11 19-9-9 19-2-8-8-2z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+  </defs>
+</svg>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="logo" aria-hidden="true">H</div>
+    <div class="brand"><b>Database Gerai</b><small>Hisana Surabaya Raya</small></div>
+    <span class="sp"></span>
+    <span class="pill" id="pill" title=""><span class="dot" id="dot"></span><span id="meta"></span></span>
+    <button class="ibtn" id="installBtn" type="button" aria-label="Pasang aplikasi" title="Pasang aplikasi" hidden><svg class="i"><use href="#i-down"/></svg></button>
+    <button class="ibtn" id="refreshBtn" type="button" aria-label="Muat ulang data" title="Muat ulang data"><svg class="i"><use href="#i-refresh"/></svg></button>
+    <button class="ibtn" id="themeBtn" type="button" aria-label="Ganti tema" title="Ganti tema"><svg class="i moon"><use href="#i-moon"/></svg><svg class="i sun"><use href="#i-sun"/></svg></button>
+    <button class="ibtn" id="logoutBtn" type="button" aria-label="Keluar" title="Keluar" hidden><svg class="i"><use href="#i-out"/></svg></button>
+  </div>
+</header>
+
+<div class="app" id="app" data-view="detail">
+  <div class="layout">
+    <aside class="card side">
+      <div class="side-head">
+        <div class="field"><svg class="i"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Cari kode, nama, alamat, kacab" aria-label="Cari gerai" autocomplete="off"></div>
+        <select id="fKacab" aria-label="Filter kacab"></select>
+        <div class="stat"><span id="statL"></span><span id="count"></span></div>
+      </div>
+      <div id="list" role="listbox" aria-label="Daftar gerai"></div>
+    </aside>
+
+    <main class="main" id="main">
+      <div class="seg" role="group" aria-label="Tampilan">
+        <button id="tabDetail" type="button" aria-pressed="true"><svg class="i"><use href="#i-store"/></svg>Detail gerai</button>
+        <button id="tabMap" type="button" aria-pressed="false"><svg class="i"><use href="#i-map"/></svg>Peta sebaran</button>
+      </div>
+      <section id="detail" class="main"></section>
+      <section id="mapView" class="card" hidden>
+        <div class="maphead"><h3>Peta sebaran gerai</h3><span class="legend" id="plotInfo"></span></div>
+        <div class="mapwrap">
+          <div id="map" role="application" aria-label="Peta sebaran gerai"></div>
+          <p class="legend" style="margin:10px 0 0">Zoom dengan tombol + dan -, scroll, atau cubit. Titik berdekatan digabung jadi angka; klik angkanya untuk memisah. Peta mengikuti filter di daftar gerai.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<nav class="nav" aria-label="Navigasi">
+  <button id="navList" type="button"><svg class="i"><use href="#i-list"/></svg>Daftar</button>
+  <button id="navDetail" type="button"><svg class="i"><use href="#i-store"/></svg>Detail</button>
+  <button id="navMap" type="button"><svg class="i"><use href="#i-map"/></svg>Peta</button>
+</nav>
+
+<div id="toast" role="status" hidden></div>
+
+<div id="gate" hidden>
+  <div class="card gatebox">
+    <div class="logo" aria-hidden="true">H</div>
+    <h2>Masuk</h2>
+    <div class="muted">Masukkan kode akses untuk membuka Database Gerai.</div>
+    <form id="gateForm" autocomplete="off">
+      <input type="password" id="gateIn" placeholder="Kode akses" aria-label="Kode akses" required>
+      <label class="rem"><input type="checkbox" id="gateRem" checked> Ingat di perangkat ini</label>
+      <button class="btn pri" type="submit" id="gateGo" style="justify-content:center;height:40px">Masuk</button>
+      <div class="msg muted" id="gateMsg" role="status"></div>
+    </form>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+/* ===== Pengaturan =====
+   API_URL  : alamat Web App Apps Script (AppsScript_Backend_Database_Gerai.gs).
+   GMAPS_KEY: opsional. API key Google Maps JavaScript API; kosong = peta Esri. */
+const API_URL='https://script.google.com/macros/s/AKfycbyoCccRzs9AUDIbaM2UBDad7ZRoGSVcubaUaMRPLERXyZOKgHoG7c-zYQDYvQEx67i1cg/exec';
+const GMAPS_KEY='';
+const REFRESH_MS=120000;
+const SNAPSHOT_DATE='3 Nov 2026';
+const SNAPSHOT=/*DATA*/[];
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const low=s=>String(s||'').toLowerCase();
+const isUrl=v=>/^https?:\/\//i.test(v||'');
+const ic=n=>`<svg class="i"><use href="#i-${n}"/></svg>`;
+const fmtPhone=p=>p?'0'+p.slice(2):'';
+const wa=p=>p?`<a href="https://wa.me/${esc(p)}" target="_blank" rel="noopener" class="num">${esc(fmtPhone(p))}</a>`:'<span class="muted">-</span>';
+const initials=n=>{const w=String(n||'').replace(/[^\p{L}\p{N} ]/gu,'').trim().split(/\s+/);return(((w[0]||'')[0]||'')+((w[1]||'')[0]||'')).toUpperCase()||'?'};
+
+let GERAI=[],idx={},sel=null,view='detail',lastSync=null,liveOk=false,failed=false;
+let accessCode='';try{accessCode=localStorage.getItem('hsr-code')||''}catch(e){}
+let gateOn=false,hashPending=!!location.hash.slice(1);
+
+/* ---------- tema ---------- */
+(function(){
+  const r=document.documentElement;let t=null;
+  try{t=localStorage.getItem('hsr-theme')}catch(e){}
+  if(t==='dark'||t==='light')r.setAttribute('data-theme',t);
+  $('#themeBtn').onclick=()=>{
+    const dark=r.getAttribute('data-theme')==='dark'||(!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);
+    const n=dark?'light':'dark';r.setAttribute('data-theme',n);
+    try{localStorage.setItem('hsr-theme',n)}catch(e){}
+  };
+})();
+
+/* ---------- data ---------- */
+function setData(arr){
+  GERAI=arr;idx={};GERAI.forEach(g=>idx[low(g.k)]=g);
+  const kacabs=[...new Set(GERAI.map(g=>g.kc).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const cur=$('#fKacab').value;
+  $('#fKacab').innerHTML=`<option value="">Semua kacab (${kacabs.length})</option>`+kacabs.map(k=>`<option value="${esc(k)}">${esc(k)} (${GERAI.filter(g=>g.kc===k).length})</option>`).join('');
+  if(kacabs.includes(cur))$('#fKacab').value=cur;
+  if(sel&&!idx[low(sel)])sel=null;
+  if(!sel&&hashPending){const hg=idx[location.hash.slice(1).toLowerCase()];if(hg){sel=hg.k;hashPending=false;if(view==='list')setView('detail')}}
+  $('#statL').innerHTML=GERAI.length?`<b>${GERAI.length}</b> gerai · <b>${kacabs.length}</b> kacab`:'';
+  renderMeta();renderList();renderDetail();if(view==='map')drawMap(false);
+}
+function hm(d){return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':')}
+function renderMeta(){
+  $('#dot').className='dot'+(liveOk?' live':failed?' err':'');
+  let t,full;
+  if(!API_URL){t=GERAI.length?`Snapshot ${SNAPSHOT_DATE}`:'Belum terhubung';full='Belum terhubung ke Google Sheet'}
+  else if(gateOn){t='Perlu kode akses';full=t}
+  else if(liveOk){t=`Live · ${hm(lastSync)}`;full=`Live dari Google Sheet, diperbarui ${hm(lastSync)}`}
+  else if(failed){t=lastSync?`Gagal memuat · data ${hm(lastSync)}`:'Gagal terhubung';full='Tidak bisa menghubungi Google Sheet'}
+  else{t='Menghubungkan...';full=t}
+  $('#meta').textContent=t;$('#pill').title=full;
+  $('#logoutBtn').hidden=!(API_URL&&accessCode);
+}
+async function api(body){
+  const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),25000);
+  try{
+    const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body),signal:ctl.signal});
+    return await r.json();
+  }finally{clearTimeout(to)}
+}
+function showGate(msg,bad){
+  gateOn=true;$('#gate').hidden=false;
+  const m=$('#gateMsg');m.textContent=msg||'';m.className='msg '+(bad?'bad':'muted');
+  setTimeout(()=>$('#gateIn').focus(),30);renderMeta();
+}
+function hideGate(){gateOn=false;$('#gate').hidden=true;$('#gateIn').value=''}
+let loading=false;
+async function loadLive(){
+  if(!API_URL||loading||gateOn)return;
+  loading=true;$('#refreshBtn').disabled=true;
+  try{
+    const j=await api({action:'data',code:accessCode});
+    if(j.need_code){
+      const had=!!accessCode;accessCode='';try{localStorage.removeItem('hsr-code')}catch(e){}
+      setData([]);showGate(j.locked?j.error:(had?'Kode akses berubah atau salah. Masukkan lagi.':''),j.locked||had);return;
+    }
+    if(!j.ok||!Array.isArray(j.gerai))throw new Error(j.error||'respons tidak valid');
+    liveOk=true;failed=false;lastSync=new Date();setData(j.gerai);
+  }catch(e){liveOk=false;failed=true;renderMeta();console.warn('sinkron gagal',e)}
+  finally{loading=false;$('#refreshBtn').disabled=false}
+}
+$('#gateForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const code=$('#gateIn').value.trim();if(!code)return;
+  $('#gateGo').disabled=true;$('#gateMsg').textContent='Memeriksa...';$('#gateMsg').className='msg muted';
+  try{
+    const j=await api({action:'data',code});
+    if(j.ok&&Array.isArray(j.gerai)){
+      accessCode=code;
+      try{if($('#gateRem').checked)localStorage.setItem('hsr-code',code);else localStorage.removeItem('hsr-code')}catch(e){}
+      hideGate();liveOk=true;failed=false;lastSync=new Date();setData(j.gerai);
+    }else showGate(j.error||'Kode akses salah',true);
+  }catch(err){showGate('Tidak bisa menghubungi server. Coba lagi.',true)}
+  finally{$('#gateGo').disabled=false}
+});
+$('#logoutBtn').onclick=()=>{
+  accessCode='';try{localStorage.removeItem('hsr-code')}catch(e){}
+  lockAll();liveOk=false;setData([]);showGate('');
+};
+$('#refreshBtn').onclick=()=>API_URL?loadLive():location.reload();
+setInterval(()=>{if(!document.hidden)loadLive()},REFRESH_MS);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&lastSync&&Date.now()-lastSync>30000)loadLive()});
+
+/* ---------- daftar ---------- */
+function filtered(){
+  const q=low($('#q').value).trim(),kc=$('#fKacab').value;
+  return GERAI.filter(g=>(!kc||g.kc===kc)&&(!q||low([g.k,g.n,g.al,g.kc,g.id].join(' ')).includes(q)));
+}
+function renderList(){
+  const rows=filtered();
+  $('#count').textContent=GERAI.length?`${rows.length} tampil`:'';
+  let h;
+  if(!GERAI.length)h=API_URL?(gateOn?'<div class="empty">Masukkan kode akses untuk melihat data.</div>':'<div class="empty">Memuat data dari Google Sheet...</div>'):'<div class="empty"><h3>Belum terhubung</h3>Isi <span class="code">API_URL</span> di file ini dengan alamat Web App Apps Script.</div>';
+  else h=rows.map(g=>`<div class="item" role="option" tabindex="0" data-k="${esc(g.k)}" aria-selected="${sel===g.k}"><div class="av" aria-hidden="true">${esc(initials(g.n))}</div><div class="t"><b>${esc(g.n)}</b><small><span class="code">${esc(g.k)}</span><span>${esc(g.kc)}</span></small></div></div>`).join('')||'<div class="empty"><h3>Tidak ada hasil</h3>Coba kata kunci atau kacab lain.</div>';
+  $('#list').innerHTML=h;
+}
+$('#list').addEventListener('click',e=>{const it=e.target.closest('.item');if(it)pick(it.dataset.k)});
+$('#list').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('item')){e.preventDefault();pick(e.target.dataset.k)}});
+function onFilter(){renderList();if(view==='map')drawMap(true)}
+$('#q').addEventListener('input',onFilter);
+$('#fKacab').addEventListener('change',onFilter);
+
+/* ---------- detail ---------- */
+function copyText(t,btn){
+  const lab=btn.innerHTML;
+  const done=()=>{btn.innerHTML=ic('copy')+'Tersalin';setTimeout(()=>btn.innerHTML=lab,1400)};
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){}ta.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,fb);else fb();
+}
+function summary(g){
+  return [`KODE GERAI: ${g.k}`,`GERAI: ${g.n}`,`ALAMAT: ${g.al}`,`NAMA EKSTERNAL: ${g.on?g.on.gf[0]:''}`,'',
+    `KACAB: ${g.kc}${g.kp?' '+fmtPhone(g.kp):''}`,`HP GERAI: ${fmtPhone(g.hp)}`,'','TIM:',
+    ...g.tm.map(t=>`- ${t[0]} (${t[1]}) ${fmtPhone(t[2])}`)].join('\n');
+}
+/* data sensitif: dikunci PIN di server */
+let pinMem=null,pinTimer=null,sensShown=null,sensHideTimer=null;
+function lockAll(){pinMem=null;sensShown=null;clearTimeout(pinTimer);clearTimeout(sensHideTimer);renderSens()}
+function renderSens(msg,bad){
+  const box=$('#sensBox');if(!box)return;
+  const g=idx[low(sel)];if(!g)return;
+  if(!API_URL){box.innerHTML='<div class="muted">Aktif setelah aplikasi terhubung ke backend Apps Script.</div>';return}
+  if(sensShown&&sensShown.k===g.k){
+    const rows=Object.entries(sensShown.data).filter(([,v])=>v);
+    box.innerHTML=(rows.length?`<div class="kv">${rows.map(([k,v])=>`<div>${esc(k)}</div><div><span class="val">${esc(v)}</span> <button class="btn sm" type="button" data-cp="${esc(v)}">${ic('copy')}Salin</button></div>`).join('')}</div>`:'<div class="muted">Tidak ada data sensitif tersimpan untuk gerai ini.</div>')+
+      `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn sm" type="button" id="lockBtn">${ic('lock')}Kunci lagi</button><span class="legend">Tersembunyi otomatis dalam 60 detik</span></div>`;
+    return;
+  }
+  box.innerHTML=`<form id="pinForm" autocomplete="off"><input type="password" id="pinIn" inputmode="numeric" placeholder="Masukkan PIN" aria-label="PIN data sensitif" ${pinMem?'':'required'}><button class="btn pri" type="submit" id="pinGo">${ic('lock')}Tampilkan</button></form><div class="msg ${bad?'bad':'muted'}" id="pinMsg">${esc(msg||'ID PLN, ID PDAM, rekening, username dan PIN akun online.')}</div>`;
+}
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='pinForm')return;
+  e.preventDefault();
+  const g=idx[low(sel)];if(!g)return;
+  const pin=$('#pinIn').value||pinMem;
+  $('#pinGo').disabled=true;$('#pinMsg').textContent='Memeriksa PIN...';$('#pinMsg').className='msg muted';
+  try{
+    const j=await api({action:'sens',kode:g.k,pin,code:accessCode});
+    if(j.need_code){setData([]);showGate('Sesi berakhir. Masukkan kode akses lagi.',true);return}
+    if(!j.ok){pinMem=null;renderSens(j.error||'Gagal',true);return}
+    pinMem=pin;clearTimeout(pinTimer);pinTimer=setTimeout(()=>{pinMem=null},300000);
+    sensShown={k:g.k,data:j.data||{}};clearTimeout(sensHideTimer);sensHideTimer=setTimeout(()=>{sensShown=null;renderSens()},60000);
+    renderSens();
+  }catch(err){renderSens('Tidak bisa menghubungi server. Coba lagi.',true)}
+});
+document.addEventListener('click',e=>{
+  const cp=e.target.closest('[data-cp]');if(cp){copyText(cp.dataset.cp,cp);return}
+  if(e.target.closest('#lockBtn'))lockAll();
+});
+
+const PF={gf:['GoFood','#e4002b'],gr:['GrabFood','#00a651'],sf:['ShopeeFood','#ee4d2d'],tt:['TikTok Go','#00c2c7']};
+function platform(key,v){
+  const [t,col]=PF[key],[nm,id,url]=v;
+  return `<div class="pf"><header><i style="background:${col}"></i>${t}</header><div class="nm">${esc(nm)||'<span class="muted">Nama belum diisi</span>'}</div><div class="id">${esc(id)||'-'}</div>${isUrl(url)?`<a class="btn sm" style="justify-self:start" href="${esc(url)}" target="_blank" rel="noopener">${ic('ext')}Buka ${t}</a>`:'<span class="legend">Belum ada link di sheet</span>'}</div>`;
+}
+function qponCard(o){
+  return `<div class="pf"><header><i style="background:#7c3aed"></i>Qpon</header><div class="nm">${esc(o.qp)||'<span class="muted">Nama belum diisi</span>'}</div>${isUrl(o.ql)?`<a class="btn sm" style="justify-self:start" href="${esc(o.ql)}" target="_blank" rel="noopener">${ic('ext')}Buka Qpon</a>`:'<span class="legend">Belum ada link di sheet</span>'}</div>`;
+}
+function aciCard(o){return `<div class="pf"><header><i style="background:#6b7280"></i>ACI</header><div class="nm">${esc(o.aci)||'<span class="muted">Nama belum diisi</span>'}</div></div>`}
+function doc(label,url){return isUrl(url)?`<a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">${ic('file')}${label}</a>`:`<span class="chip off">${label} belum ada</span>`}
+function renderDetail(){
+  const el=$('#detail');
+  const g=idx[low(sel)];
+  if(!g){
+    el.innerHTML=GERAI.length?`<div class="card empty"><h3>Pilih gerai</h3>Pilih gerai dari daftar untuk melihat alamat, kontak, tim, dan akun online food.<div style="margin-top:14px" class="navonly"><button class="btn pri" type="button" data-goto="list">${ic('list')}Buka daftar gerai</button></div></div>`:'';
+    return;
+  }
+  sensShown=sensShown&&sensShown.k===g.k?sensShown:null;
+  const [la,lo]=g.ll||[];
+  const dir=g.ll?`https://www.google.com/maps/dir/?api=1&destination=${la},${lo}`:'';
+  let h=`<div class="card hero"><div class="av" aria-hidden="true">${esc(initials(g.n))}</div>
+    <div class="hero-main"><h2>${esc(g.n)}</h2><div class="chips"><span class="code">${esc(g.k)}</span>${g.id?`<span class="code">ID ${esc(g.id)}</span>`:''}<span class="chip">${ic('user')}${esc(g.kc)||'Kacab belum diisi'}</span></div></div>
+    <div class="acts">${dir?`<a class="btn pri" href="${dir}" target="_blank" rel="noopener">${ic('nav')}Rute</a>`:''}${g.hp?`<a class="btn" href="https://wa.me/${esc(g.hp)}" target="_blank" rel="noopener">${ic('phone')}WhatsApp</a>`:''}<button class="btn" type="button" id="cpBtn">${ic('copy')}Salin ringkasan</button></div></div>
+  <div class="cards">
+   <section class="card sec"><h3>${ic('pin')}Lokasi</h3><div class="kv">
+      <div>Alamat</div><div>${esc(g.al)||'-'}</div>
+      <div>Koordinat</div><div>${g.ll?`<a class="num" href="https://www.google.com/maps?q=${la},${lo}" target="_blank" rel="noopener">${la.toFixed(6)}, ${lo.toFixed(6)}</a>`:'<span class="muted">Belum diisi</span>'}</div></div>
+      ${g.ll?`<iframe class="gm" title="Google Maps ${esc(g.n)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=${la},${lo}&z=17&output=embed"></iframe>`:''}</section>
+   <section class="card sec"><h3>${ic('phone')}Kontak dan dokumen</h3><div class="kv">
+      <div>HP gerai</div><div>${wa(g.hp)}</div>
+      <div>Kacab</div><div>${esc(g.kc)||'-'}${g.kp?` · ${wa(g.kp)}`:''}</div>
+      <div>Email</div><div>${esc(g.em)||'<span class="muted">-</span>'}</div>
+      <div>Jenis KWH</div><div>${esc(g.kwh)||'-'}</div>
+      <div>CV</div><div>${esc(g.cv)||'-'}</div></div>
+      <div class="docs">${doc('Bank statement',g.bs)}${doc('Legalitas',g.lg)}${doc('GMB',g.gmb)}</div></section>
+   <section class="card sec span"><h3>${ic('users')}Tim gerai (${g.tm.length})</h3>`;
+  h+=g.tm.length?`<div class="tablewrap"><table><thead><tr><th>Nama</th><th>Jabatan</th><th>WhatsApp</th></tr></thead><tbody>${g.tm.map(t=>`<tr><td>${esc(t[0])}</td><td><span class="role${/Kepala/i.test(t[1])?' ka':''}">${esc(t[1])}</span></td><td class="n">${wa(t[2])}</td></tr>`).join('')}</tbody></table></div>`:'<div class="muted">Belum ada data tim di sheet.</div>';
+  h+=`</section><section class="card sec span"><h3>${ic('bag')}Online food</h3>`;
+  if(g.on){const o=g.on;h+=`<div class="plat">${platform('gf',o.gf)}${platform('gr',o.gr)}${platform('sf',o.sf)}${platform('tt',o.tt||['','',''])}${qponCard(o)}${aciCard(o)}</div>`}
+  else h+='<div class="muted">Belum ada data online di sheet.</div>';
+  h+=`</section><section class="card sec span"><h3>${ic('lock')}Data sensitif</h3><div class="sens" id="sensBox"></div></section></div>`;
+  el.innerHTML=h;
+  $('#cpBtn').onclick=e=>copyText(summary(g),e.currentTarget);
+  renderSens();
+}
+
+/* ---------- peta: Google Maps (kalau ada key) atau Esri ---------- */
+let gFailed=false,gPromise=null,gmap=null,gInfo=null,gMarkers=[],map=null,layer=null,markers={},mapKind=null;
+const popupHtml=g=>`<b>${esc(g.n)}</b><br><span class="code">${esc(g.k)}</span> ${esc(g.kc)}<br><a href="#" data-pick="${esc(g.k)}">Lihat detail</a> · <a href="https://www.google.com/maps/dir/?api=1&destination=${g.ll[0]},${g.ll[1]}" target="_blank" rel="noopener">Rute</a>`;
+function loadGoogle(){
+  if(gPromise)return gPromise;
+  gPromise=new Promise((res,rej)=>{
+    window.__gmReady=()=>res();
+    window.gm_authFailure=()=>{gFailed=true;resetMapEl();if(view==='map')drawMap(true)};
+    const s=document.createElement('script');
+    s.src='https://maps.googleapis.com/maps/api/js?key='+encodeURIComponent(GMAPS_KEY)+'&v=weekly&loading=async&callback=__gmReady';
+    s.async=true;s.onerror=()=>rej(new Error('gagal memuat Google Maps'));
+    document.head.appendChild(s);
+  });
+  return gPromise;
+}
+function resetMapEl(){
+  if(map){map.remove();map=null;layer=null}
+  gmap=null;gInfo=null;gMarkers=[];
+  const el=$('#map');const n=el.cloneNode(false);el.replaceWith(n);
+}
+async function drawGoogle(fit){
+  const rows=filtered().filter(g=>g.ll);
+  const {Map:GMap,InfoWindow,LatLngBounds}=await google.maps.importLibrary('maps');
+  const {AdvancedMarkerElement,PinElement}=await google.maps.importLibrary('marker');
+  if(!gmap){
+    gmap=new GMap($('#map'),{center:{lat:-7.3,lng:112.73},zoom:10,mapId:'DEMO_MAP_ID',zoomControl:true,mapTypeControl:true,streetViewControl:true,fullscreenControl:true,gestureHandling:'greedy'});
+    gInfo=new InfoWindow();
+  }
+  gMarkers.forEach(m=>{m.map=null});gMarkers=[];
+  const b=new LatLngBounds();
+  rows.forEach(g=>{
+    const on=g.k===sel,pos={lat:g.ll[0],lng:g.ll[1]};b.extend(pos);
+    const pin=new PinElement({background:on?'#111111':'#c8102e',borderColor:'#ffffff',glyphColor:'#ffffff',scale:on?1.3:1});
+    const m=new AdvancedMarkerElement({map:gmap,position:pos,title:g.n+' ('+g.k+')',content:pin.element,zIndex:on?999:1});
+    m.addListener('click',()=>{gInfo.setContent('<div style="font:13px/1.45 system-ui,sans-serif;color:#1b2230">'+popupHtml(g)+'</div>');gInfo.open({map:gmap,anchor:m})});
+    gMarkers.push(m);
+  });
+  $('#plotInfo').textContent=`Google Maps · ${rows.length} titik dari ${filtered().length} gerai`;
+  if(fit&&rows.length){gmap.fitBounds(b,60);google.maps.event.addListenerOnce(gmap,'idle',()=>{if(gmap.getZoom()>17)gmap.setZoom(17)})}
+}
+function drawLeaflet(fit){
+  const el=$('#map');
+  if(typeof L==='undefined'){el.innerHTML='<div class="empty">Peta tidak bisa dimuat. Cek koneksi internet.</div>';return}
+  if(!map){
+    map=L.map('map',{zoomControl:true,scrollWheelZoom:true}).setView([-7.3,112.73],10);
+    const esri=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'});
+    const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'});
+    esri.addTo(map);
+    L.control.layers({'Peta (Esri)':esri,'Satelit':sat}).addTo(map);L.control.scale({imperial:false}).addTo(map);
+    layer=L.markerClusterGroup({maxClusterRadius:42,disableClusteringAtZoom:16,showCoverageOnHover:false,spiderfyOnMaxZoom:true}).addTo(map);
+  }
+  setTimeout(()=>map.invalidateSize(),50);
+  layer.clearLayers();markers={};
+  const rows=filtered().filter(g=>g.ll),pts=[];
+  rows.forEach(g=>{
+    const on=g.k===sel;pts.push(g.ll);
+    const m=L.circleMarker(g.ll,{radius:on?10:7,color:'#fff',weight:2,fillColor:on?'#111':'#c8102e',fillOpacity:.9}).addTo(layer);
+    m.bindPopup(popupHtml(g));markers[g.k]=m;
+  });
+  $('#plotInfo').textContent=`${rows.length} titik dari ${filtered().length} gerai`+(GMAPS_KEY&&gFailed?' · API key Google Maps ditolak, memakai peta Esri':'');
+  if(fit&&pts.length)map.fitBounds(pts,{padding:[30,30],maxZoom:16});
+}
+async function drawMap(fit){
+  const want=GMAPS_KEY&&!gFailed?'google':'leaflet';
+  if(mapKind&&mapKind!==want){resetMapEl()}
+  mapKind=want;
+  if(want==='google'){
+    try{await loadGoogle();if(gFailed)return drawMap(fit);await drawGoogle(fit)}
+    catch(e){console.warn(e);gFailed=true;resetMapEl();mapKind='leaflet';drawLeaflet(fit)}
+  }else drawLeaflet(fit);
+}
+function focusSel(){
+  const g=idx[low(sel)];if(!g||!g.ll)return;
+  if(gmap){gmap.setCenter({lat:g.ll[0],lng:g.ll[1]});gmap.setZoom(16)}else if(map){map.setView(g.ll,16)}
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('[data-pick]');if(!a)return;
+  e.preventDefault();pick(a.dataset.pick,true);
+});
+
+/* ---------- navigasi ---------- */
+const mq=matchMedia('(min-width:900px)');
+function setView(v){
+  if(mq.matches&&v==='list')v='detail';
+  view=v;$('#app').dataset.view=v;
+  $('#detail').hidden=v==='map';$('#mapView').hidden=v!=='map';
+  $('#tabDetail').setAttribute('aria-pressed',v!=='map');$('#tabMap').setAttribute('aria-pressed',v==='map');
+  [['list','#navList'],['detail','#navDetail'],['map','#navMap']].forEach(([k,s])=>{const b=$(s);if(k===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(v==='map')drawMap(true).then(focusSel);
+  if(!mq.matches)scrollTo(0,0);
+}
+mq.addEventListener('change',()=>setView(view));
+$('#tabDetail').onclick=()=>setView('detail');
+$('#tabMap').onclick=()=>setView('map');
+$('#navList').onclick=()=>setView('list');
+$('#navDetail').onclick=()=>setView('detail');
+$('#navMap').onclick=()=>setView('map');
+document.addEventListener('click',e=>{const b=e.target.closest('[data-goto]');if(b)setView(b.dataset.goto)});
+function pick(k,fromMap){
+  const g=idx[low(k)];sel=g?g.k:null;
+  try{if(sel)history.replaceState(null,'','#'+sel.toLowerCase())}catch(e){}
+  renderList();renderDetail();
+  if(view==='list'||fromMap)setView('detail');
+  else if(view==='map')drawMap(false).then(focusSel);
+}
+addEventListener('hashchange',()=>{const g=idx[location.hash.slice(1)];if(g&&g.k!==sel)pick(g.k)});
+
+/* ---------- pasang sebagai aplikasi (PWA) ---------- */
+let deferredPrompt=null,toastT=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true},9000)}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;if(!standalone())$('#installBtn').hidden=false});
+addEventListener('appinstalled',()=>{deferredPrompt=null;$('#installBtn').hidden=true;toast('Aplikasi terpasang.')});
+const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+if(isIOS&&!standalone()&&location.protocol==='https:')$('#installBtn').hidden=false;
+$('#installBtn').onclick=async()=>{
+  if(deferredPrompt){deferredPrompt.prompt();try{await deferredPrompt.userChoice}catch(e){}deferredPrompt=null;$('#installBtn').hidden=true}
+  else toast('Di Safari: ketuk tombol Bagikan, lalu pilih "Tambahkan ke Layar Utama".');
+};
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+(function init(){
+  setData(SNAPSHOT);
+  const g=idx[location.hash.slice(1)];
+  if(g){sel=g.k;renderList();renderDetail()}
+  setView(mq.matches||g?'detail':'list');
+  loadLive();
+})();
+</script>
+</body>
+</html>
