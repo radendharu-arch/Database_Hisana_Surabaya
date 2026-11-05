@@ -1,8 +1,8 @@
 /* Service worker Database Gerai Hisana.
    Menyimpan kerangka aplikasi (HTML, logo, ikon, pustaka peta) supaya cepat dibuka dan tetap terbuka saat offline.
    Data gerai TIDAK pernah disimpan di sini: permintaan ke Apps Script selalu lewat jaringan. */
-const V = 'gerai-v2';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'logo-hisana.png', 'banner-hisana.png', 'favicon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
+const V = 'gerai-v3';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'favicon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 const LIBS = /^(unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com)$/;
 
 self.addEventListener('install', e => {
