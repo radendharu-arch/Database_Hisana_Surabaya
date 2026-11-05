@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Gerai Hisana">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Database Gerai Hisana</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23c8102e'/%3E%3Ctext x='16' y='23' font-family='Arial' font-weight='700' font-size='20' text-anchor='middle' fill='white'%3EH%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
@@ -47,13 +47,13 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);-webkit-text-size-adjust:100%}
 svg.i{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .num,.code,td.n{font-variant-numeric:tabular-nums}
-:is(input,select,button,a,.item,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:is(input,select,button,a,.item,.near,[tabindex]):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* app bar */
 .bar{position:sticky;top:0;z-index:20;background:var(--bar);color:var(--bar-ink);
   padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
 .bar-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;gap:12px}
-.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.logo-img{height:32px;width:auto;display:block;flex:none}
 .brand{min-width:0;line-height:1.2;overflow:hidden}
 .brand b{display:block;font-size:15px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .brand small{color:var(--bar-mute);font-size:12px;white-space:nowrap}
@@ -96,6 +96,9 @@ select{appearance:auto}
 .code{font-family:var(--f-mono);font-size:11.5px;background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;white-space:nowrap;color:var(--ink)}
 .empty{color:var(--mute);text-align:center;padding:44px 18px}
 .empty h3{margin:0 0 6px;font-size:15px;color:var(--ink)}
+.welcome{overflow:hidden}
+.wbanner{display:block;width:100%;height:auto}
+.welcome .empty{padding:30px 18px 34px}
 
 /* tombol */
 .btn{font:inherit;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;cursor:pointer;text-decoration:none;white-space:nowrap}
@@ -153,10 +156,33 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
 /* peta */
 .maphead{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px 0}
 .maphead h3{margin:0;font-size:15px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink)}
-#map{width:100%;height:calc(100dvh - 250px);min-height:420px;border-radius:12px;background:var(--surface2)}
+#map{width:100%;height:calc(100dvh - 340px);min-height:380px;border-radius:12px;background:var(--surface2)}
 .mapwrap{padding:12px 16px 14px}
 .leaflet-container{font-family:var(--f-body)}
 .leaflet-popup-content{font:13px/1.5 var(--f-body)}
+
+/* cari alamat di peta */
+.geoform{display:flex;gap:8px;margin-bottom:8px}
+.geoform .field{flex:1;min-width:0}
+.geomsg{font-size:12.5px;margin:0 0 8px}
+.geomsg.bad{color:var(--bad)}
+.geomsg:empty{display:none}
+.neartop{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px;color:var(--mute)}
+.neartop span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.neartop b{color:var(--ink)}
+.neartop:empty{display:none}
+.nearlist{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;overscroll-behavior-x:contain}
+.nearlist:empty{display:none}
+.near{flex:0 0 auto;width:196px;display:grid;gap:2px;padding:8px 10px;border:1px solid var(--line);background:var(--surface2);border-radius:11px;cursor:pointer;min-width:0}
+.near:hover{border-color:var(--accent)}
+.near b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.near small{color:var(--mute);font-size:11.5px;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
+.near .dist{color:var(--accent);font-weight:700}
+/* isi popup marker */
+.pp{min-width:190px;color:#1b2230;font-size:13px;line-height:1.45}
+.pp .code{color:#1b2230}
+.pp a.b{display:inline-block;margin:8px 6px 0 0;padding:4px 11px;border-radius:8px;border:1px solid #c8102e;color:#c8102e;text-decoration:none;font-weight:600;font-size:12px}
+.pp a.b.p{background:#c8102e;color:#fff}
 
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:60;max-width:min(92vw,420px);background:var(--bar);color:var(--bar-ink);padding:12px 16px;border-radius:12px;font-size:13px;box-shadow:0 8px 28px rgba(0,0,0,.28)}
 #toast[hidden]{display:none}
@@ -164,8 +190,9 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
 /* gerbang kode akses */
 #gate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #gate[hidden]{display:none}
-.gatebox{width:min(100%,380px);padding:26px;text-align:center}
-.gatebox .logo{margin:0 auto 14px;width:46px;height:46px;font-size:24px;border-radius:12px}
+.gatebox{width:min(100%,380px);overflow:hidden;text-align:center}
+.gatebanner{display:block;width:100%;height:auto}
+.gatebody{padding:20px 26px 26px}
 .gatebox h2{margin-bottom:4px}
 .gatebox form{display:grid;gap:10px;margin-top:16px;text-align:left}
 .gatebox label.rem{display:flex;gap:8px;align-items:center;color:var(--mute);font-size:12.5px}
@@ -178,16 +205,16 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
   .app[data-view=list] .main{display:none}
   .app:not([data-view=list]) .side{display:none}
   .seg{display:none}
-  #map{height:calc(100dvh - 270px)}
+  #map{height:calc(100dvh - 400px);min-height:300px}
   .nav{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);
     padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
   .nav button{font:inherit;font-size:11.5px;font-weight:600;border:0;background:transparent;color:var(--mute);display:grid;justify-items:center;gap:2px;padding:6px 0;border-radius:10px;cursor:pointer}
   .nav button svg{width:20px;height:20px}
   .nav button[aria-current=page]{color:var(--accent)}
 }
-@media(max-width:520px){.hero{padding:14px}.hero .av{width:46px;height:46px;font-size:16px}h2{font-size:18px}.sec{padding:14px}}
+@media(max-width:520px){.hero{padding:14px}.hero .av{width:46px;height:46px;font-size:16px}h2{font-size:18px}.sec{padding:14px}.geoform .btn span{display:none}}
 @media(min-width:900px){.navonly{display:none}}
-@media (prefers-reduced-motion:no-preference){.item,.btn,.seg button,.ibtn{transition:background-color .12s,border-color .12s,color .12s}}
+@media (prefers-reduced-motion:no-preference){.item,.btn,.seg button,.ibtn,.near{transition:background-color .12s,border-color .12s,color .12s}}
 </style>
 </head>
 <body>
@@ -213,12 +240,13 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
     <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
     <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></symbol>
+    <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
   </defs>
 </svg>
 
 <header class="bar">
   <div class="bar-in">
-    <div class="logo" aria-hidden="true">H</div>
+    <img class="logo-img" src="logo-hisana.png" alt="Hisana Fried Chicken" width="63" height="32">
     <div class="brand"><b>Database Gerai</b><small>Hisana Surabaya Raya</small></div>
     <span class="sp"></span>
     <span class="pill" id="pill" title=""><span class="dot" id="dot"></span><span id="meta"></span></span>
@@ -249,8 +277,16 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
       <section id="mapView" class="card" hidden>
         <div class="maphead"><h3>Peta sebaran gerai</h3><span class="legend" id="plotInfo"></span></div>
         <div class="mapwrap">
+          <form class="geoform" id="geoForm" autocomplete="off">
+            <div class="field"><svg class="i"><use href="#i-search"/></svg><input type="search" id="geoIn" placeholder="Cari alamat, mis. Jl. Darmo 10 Surabaya" aria-label="Cari alamat untuk melihat gerai terdekat" enterkeyhint="search"></div>
+            <button class="btn pri" type="submit" id="geoGo">Cari</button>
+            <button class="btn" type="button" id="geoMe" title="Pakai lokasi saya" aria-label="Pakai lokasi saya"><svg class="i"><use href="#i-locate"/></svg><span>Lokasi saya</span></button>
+          </form>
+          <div class="geomsg muted" id="geoMsg" role="status"></div>
+          <div class="neartop" id="nearTop"></div>
+          <div class="nearlist" id="nearList"></div>
           <div id="map" role="application" aria-label="Peta sebaran gerai"></div>
-          <p class="legend" style="margin:10px 0 0">Zoom dengan tombol + dan -, scroll, atau cubit. Titik berdekatan digabung jadi angka; klik angkanya untuk memisah. Peta mengikuti filter di daftar gerai.</p>
+          <p class="legend" style="margin:10px 0 0">Ketik alamat (atau koordinat) lalu Cari: peta menandai lokasinya dan menampilkan 5 gerai terdekat. Klik titik gerai untuk lihat alamat, kontak, dan rute langsung di peta. Titik berdekatan digabung jadi angka; klik angkanya untuk memisah. Peta dan gerai terdekat mengikuti filter di daftar gerai.</p>
         </div>
       </section>
     </main>
@@ -267,7 +303,8 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
 
 <div id="gate" hidden>
   <div class="card gatebox">
-    <div class="logo" aria-hidden="true">H</div>
+    <img class="gatebanner" src="banner-hisana.png" alt="Hisana Fried Chicken" width="1200" height="300">
+    <div class="gatebody">
     <h2>Masuk</h2>
     <div class="muted">Masukkan kode akses untuk membuka Database Gerai.</div>
     <form id="gateForm" autocomplete="off">
@@ -276,6 +313,7 @@ iframe.gm{width:100%;height:230px;border:1px solid var(--line);border-radius:11p
       <button class="btn pri" type="submit" id="gateGo" style="justify-content:center;height:40px">Masuk</button>
       <div class="msg muted" id="gateMsg" role="status"></div>
     </form>
+    </div>
   </div>
 </div>
 
@@ -326,7 +364,7 @@ function setData(arr){
   if(sel&&!idx[low(sel)])sel=null;
   if(!sel&&hashPending){const hg=idx[location.hash.slice(1).toLowerCase()];if(hg){sel=hg.k;hashPending=false;if(view==='list')setView('detail')}}
   $('#statL').innerHTML=GERAI.length?`<b>${GERAI.length}</b> gerai · <b>${kacabs.length}</b> kacab`:'';
-  renderMeta();renderList();renderDetail();if(view==='map')drawMap(false);
+  renderMeta();renderList();renderDetail();renderNear();if(view==='map')drawMap(false);
 }
 function hm(d){return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':')}
 function renderMeta(){
@@ -384,7 +422,7 @@ $('#gateForm').addEventListener('submit',async e=>{
 });
 $('#logoutBtn').onclick=()=>{
   accessCode='';try{localStorage.removeItem('hsr-code')}catch(e){}
-  lockAll();liveOk=false;setData([]);showGate('');
+  geoOrigin=null;lockAll();liveOk=false;setData([]);showGate('');
 };
 $('#refreshBtn').onclick=()=>API_URL?loadLive():location.reload();
 setInterval(()=>{if(!document.hidden)loadLive()},REFRESH_MS);
@@ -405,7 +443,7 @@ function renderList(){
 }
 $('#list').addEventListener('click',e=>{const it=e.target.closest('.item');if(it)pick(it.dataset.k)});
 $('#list').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('item')){e.preventDefault();pick(e.target.dataset.k)}});
-function onFilter(){renderList();if(view==='map')drawMap(true)}
+function onFilter(){renderList();if(view==='map'){renderNear();drawMap(true)}}
 $('#q').addEventListener('input',onFilter);
 $('#fKacab').addEventListener('change',onFilter);
 
@@ -470,7 +508,8 @@ function renderDetail(){
   const el=$('#detail');
   const g=idx[low(sel)];
   if(!g){
-    el.innerHTML=GERAI.length?`<div class="card empty"><h3>Pilih gerai</h3>Pilih gerai dari daftar untuk melihat alamat, kontak, tim, dan akun online food.<div style="margin-top:14px" class="navonly"><button class="btn pri" type="button" data-goto="list">${ic('list')}Buka daftar gerai</button></div></div>`:'';
+    const bn='<img class="wbanner" src="banner-hisana.png" alt="Hisana Fried Chicken" width="1200" height="300">';
+    el.innerHTML=`<div class="card welcome">${bn}${GERAI.length?`<div class="empty"><h3>Pilih gerai</h3>Pilih gerai dari daftar untuk melihat alamat, kontak, tim, dan akun online food.<div style="margin-top:14px" class="navonly"><button class="btn pri" type="button" data-goto="list">${ic('list')}Buka daftar gerai</button></div></div>`:''}</div>`;
     return;
   }
   sensShown=sensShown&&sensShown.k===g.k?sensShown:null;
@@ -502,9 +541,79 @@ function renderDetail(){
   renderSens();
 }
 
+/* ---------- pencarian alamat dan gerai terdekat ---------- */
+let geoOrigin=null;   /* {ll:[lat,lng], label} titik hasil pencarian alamat / lokasi saya */
+const kmBetween=(a,b)=>{
+  const R=6371,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);
+  const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+};
+const fmtKm=d=>d<1?Math.round(d*1000)+' m':d.toFixed(1)+' km';
+function nearest(n){
+  if(!geoOrigin)return[];
+  return filtered().filter(g=>g.ll).map(g=>({g,d:kmBetween(geoOrigin.ll,g.ll)})).sort((a,b)=>a.d-b.d).slice(0,n);
+}
+function geoMsg(t,bad){const m=$('#geoMsg');m.textContent=t||'';m.className='geomsg '+(bad?'bad':'muted')}
+function renderNear(){
+  const top=$('#nearTop'),box=$('#nearList');
+  if(!geoOrigin){top.innerHTML='';box.innerHTML='';return}
+  const rows=nearest(5);
+  top.innerHTML=`<span>${rows.length?'Gerai terdekat dari':'Tidak ada gerai berkoordinat untuk'} <b>${esc(geoOrigin.label)}</b></span><button class="btn sm" type="button" id="geoClear">Hapus</button>`;
+  box.innerHTML=rows.map(({g,d})=>`<div class="near" role="button" tabindex="0" data-near="${esc(g.k)}"><b>${esc(g.n)}</b><small><span class="dist num">${fmtKm(d)}</span><span class="code">${esc(g.k)}</span><span>${esc(g.kc)}</span></small></div>`).join('');
+}
+async function geocode(q){
+  /* koordinat langsung, mis. -7.2575, 112.7521 */
+  const m=q.match(/^\s*(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/);
+  if(m){const a=+m[1],b=+m[2];if(Math.abs(a)<=90&&Math.abs(b)<=180)return{ll:[a,b],label:`${a.toFixed(5)}, ${b.toFixed(5)}`}}
+  /* alamat: OpenStreetMap Nominatim. Coba dulu di sekitar Jawa Timur, kalau kosong cari seluruh Indonesia */
+  const base='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=id&accept-language=id&q='+encodeURIComponent(q);
+  for(const extra of ['&viewbox=111.9,-6.8,113.4,-8.1&bounded=1','']){
+    const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),12000);
+    try{
+      const r=await fetch(base+extra,{signal:ctl.signal});
+      if(!r.ok)throw new Error('http '+r.status);
+      const j=await r.json();
+      if(Array.isArray(j)&&j[0])return{ll:[+j[0].lat,+j[0].lon],label:String(j[0].display_name||q).split(',').slice(0,3).join(',').trim()};
+    }finally{clearTimeout(to)}
+  }
+  return null;
+}
+function setOrigin(ll,label){geoOrigin={ll,label};renderNear();drawMap(true)}
+$('#geoForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const q=$('#geoIn').value.trim();if(!q)return;
+  if(!GERAI.length){geoMsg('Data gerai belum dimuat.',true);return}
+  $('#geoGo').disabled=true;geoMsg('Mencari alamat...');
+  try{
+    const r=await geocode(q);
+    if(!r)geoMsg('Alamat tidak ditemukan. Tambahkan nama jalan atau kecamatan, atau tempel koordinat.',true);
+    else{geoMsg('');setOrigin(r.ll,r.label)}
+  }catch(err){geoMsg('Gagal mencari alamat. Cek koneksi lalu coba lagi.',true)}
+  finally{$('#geoGo').disabled=false}
+});
+$('#geoMe').onclick=()=>{
+  if(!navigator.geolocation){geoMsg('Browser ini tidak mendukung lokasi.',true);return}
+  geoMsg('Mengambil lokasi...');
+  navigator.geolocation.getCurrentPosition(
+    p=>{geoMsg('');setOrigin([p.coords.latitude,p.coords.longitude],'Lokasi saya')},
+    ()=>geoMsg('Lokasi tidak bisa diambil. Izinkan akses lokasi di browser.',true),
+    {enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+};
+document.addEventListener('click',e=>{
+  if(e.target.closest('#geoClear')){geoOrigin=null;$('#geoIn').value='';geoMsg('');renderNear();drawMap(true);return}
+  const n=e.target.closest('[data-near]');if(n)openGerai(n.dataset.near);
+});
+document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('near')){e.preventDefault();openGerai(e.target.dataset.near)}
+});
+
 /* ---------- peta: Google Maps (kalau ada key) atau Esri ---------- */
-let gFailed=false,gPromise=null,gmap=null,gInfo=null,gMarkers=[],map=null,layer=null,markers={},mapKind=null;
-const popupHtml=g=>`<b>${esc(g.n)}</b><br><span class="code">${esc(g.k)}</span> ${esc(g.kc)}<br><a href="#" data-pick="${esc(g.k)}">Lihat detail</a> · <a href="https://www.google.com/maps/dir/?api=1&destination=${g.ll[0]},${g.ll[1]}" target="_blank" rel="noopener">Rute</a>`;
+let gFailed=false,gPromise=null,gmap=null,gInfo=null,gMarkers=[],gByK={},gOrigin=null,map=null,layer=null,markers={},originLayer=null,mapKind=null;
+const popupHtml=g=>{
+  const dist=geoOrigin?`<div><b>${fmtKm(kmBetween(geoOrigin.ll,g.ll))}</b> dari ${esc(geoOrigin.label)}</div>`:'';
+  return `<div class="pp"><b style="font-size:14px">${esc(g.n)}</b><div style="margin:3px 0"><span class="code">${esc(g.k)}</span> ${esc(g.kc)}</div>${g.al?`<div>${esc(g.al)}</div>`:''}${g.hp?`<div>HP: ${esc(fmtPhone(g.hp))}</div>`:''}${dist}<div><a class="b p" href="https://www.google.com/maps/dir/?api=1&destination=${g.ll[0]},${g.ll[1]}" target="_blank" rel="noopener">Rute</a>${g.hp?`<a class="b" href="https://wa.me/${esc(g.hp)}" target="_blank" rel="noopener">WhatsApp</a>`:''}<a class="b" href="#" data-pick="${esc(g.k)}">Detail lengkap</a></div></div>`;
+};
+function showG(g,m){gInfo.setContent('<div style="font:13px/1.45 system-ui,sans-serif">'+popupHtml(g)+'</div>');gInfo.open({map:gmap,anchor:m})}
 function loadGoogle(){
   if(gPromise)return gPromise;
   gPromise=new Promise((res,rej)=>{
@@ -519,7 +628,7 @@ function loadGoogle(){
 }
 function resetMapEl(){
   if(map){map.remove();map=null;layer=null}
-  gmap=null;gInfo=null;gMarkers=[];
+  originLayer=null;gmap=null;gInfo=null;gMarkers=[];gByK={};gOrigin=null;
   const el=$('#map');const n=el.cloneNode(false);el.replaceWith(n);
 }
 async function drawGoogle(fit){
@@ -530,17 +639,23 @@ async function drawGoogle(fit){
     gmap=new GMap($('#map'),{center:{lat:-7.3,lng:112.73},zoom:10,mapId:'DEMO_MAP_ID',zoomControl:true,mapTypeControl:true,streetViewControl:true,fullscreenControl:true,gestureHandling:'greedy'});
     gInfo=new InfoWindow();
   }
-  gMarkers.forEach(m=>{m.map=null});gMarkers=[];
-  const b=new LatLngBounds();
+  gMarkers.forEach(m=>{m.map=null});gMarkers=[];gByK={};
+  if(gOrigin){gOrigin.map=null;gOrigin=null}
   rows.forEach(g=>{
-    const on=g.k===sel,pos={lat:g.ll[0],lng:g.ll[1]};b.extend(pos);
+    const on=g.k===sel,pos={lat:g.ll[0],lng:g.ll[1]};
     const pin=new PinElement({background:on?'#111111':'#c8102e',borderColor:'#ffffff',glyphColor:'#ffffff',scale:on?1.3:1});
     const m=new AdvancedMarkerElement({map:gmap,position:pos,title:g.n+' ('+g.k+')',content:pin.element,zIndex:on?999:1});
-    m.addListener('click',()=>{gInfo.setContent('<div style="font:13px/1.45 system-ui,sans-serif;color:#1b2230">'+popupHtml(g)+'</div>');gInfo.open({map:gmap,anchor:m})});
-    gMarkers.push(m);
+    m.addListener('click',()=>showG(g,m));
+    gMarkers.push(m);gByK[g.k]=m;
   });
+  if(geoOrigin){
+    const pin=new PinElement({background:'#2563eb',borderColor:'#ffffff',glyphColor:'#ffffff',scale:1.2});
+    gOrigin=new AdvancedMarkerElement({map:gmap,position:{lat:geoOrigin.ll[0],lng:geoOrigin.ll[1]},title:geoOrigin.label,content:pin.element,zIndex:2000});
+  }
+  const fb=new LatLngBounds();let nf=0;
+  (geoOrigin?[geoOrigin.ll,...nearest(5).map(x=>x.g.ll)]:rows.map(g=>g.ll)).forEach(p=>{fb.extend({lat:p[0],lng:p[1]});nf++});
   $('#plotInfo').textContent=`Google Maps · ${rows.length} titik dari ${filtered().length} gerai`;
-  if(fit&&rows.length){gmap.fitBounds(b,60);google.maps.event.addListenerOnce(gmap,'idle',()=>{if(gmap.getZoom()>17)gmap.setZoom(17)})}
+  if(fit&&nf){gmap.fitBounds(fb,60);google.maps.event.addListenerOnce(gmap,'idle',()=>{if(gmap.getZoom()>17)gmap.setZoom(17)})}
 }
 function drawLeaflet(fit){
   const el=$('#map');
@@ -555,12 +670,18 @@ function drawLeaflet(fit){
   }
   setTimeout(()=>map.invalidateSize(),50);
   layer.clearLayers();markers={};
-  const rows=filtered().filter(g=>g.ll),pts=[];
+  if(originLayer){originLayer.remove();originLayer=null}
+  const rows=filtered().filter(g=>g.ll);
   rows.forEach(g=>{
-    const on=g.k===sel;pts.push(g.ll);
+    const on=g.k===sel;
     const m=L.circleMarker(g.ll,{radius:on?10:7,color:'#fff',weight:2,fillColor:on?'#111':'#c8102e',fillOpacity:.9}).addTo(layer);
-    m.bindPopup(popupHtml(g));markers[g.k]=m;
+    m.bindPopup(popupHtml(g),{maxWidth:280});markers[g.k]=m;
   });
+  if(geoOrigin){
+    originLayer=L.circleMarker(geoOrigin.ll,{radius:10,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).addTo(map);
+    originLayer.bindTooltip(geoOrigin.label,{direction:'top',offset:[0,-8]});
+  }
+  const pts=geoOrigin?[geoOrigin.ll,...nearest(5).map(x=>x.g.ll)]:rows.map(g=>g.ll);
   $('#plotInfo').textContent=`${rows.length} titik dari ${filtered().length} gerai`+(GMAPS_KEY&&gFailed?' · API key Google Maps ditolak, memakai peta Esri':'');
   if(fit&&pts.length)map.fitBounds(pts,{padding:[30,30],maxZoom:16});
 }
@@ -573,8 +694,14 @@ async function drawMap(fit){
     catch(e){console.warn(e);gFailed=true;resetMapEl();mapKind='leaflet';drawLeaflet(fit)}
   }else drawLeaflet(fit);
 }
+/* buka info gerai langsung di peta (tanpa pindah ke halaman detail) */
+function openGerai(k){
+  const g=idx[low(k)];if(!g||!g.ll)return;
+  if(gmap){const m=gByK[g.k];gmap.panTo({lat:g.ll[0],lng:g.ll[1]});if(m)showG(g,m)}
+  else if(map){const m=markers[g.k];if(m)layer.zoomToShowLayer(m,()=>m.openPopup())}
+}
 function focusSel(){
-  const g=idx[low(sel)];if(!g||!g.ll)return;
+  const g=idx[low(sel)];if(!g||!g.ll||geoOrigin)return;
   if(gmap){gmap.setCenter({lat:g.ll[0],lng:g.ll[1]});gmap.setZoom(16)}else if(map){map.setView(g.ll,16)}
 }
 document.addEventListener('click',e=>{
@@ -590,8 +717,8 @@ function setView(v){
   $('#detail').hidden=v==='map';$('#mapView').hidden=v!=='map';
   $('#tabDetail').setAttribute('aria-pressed',v!=='map');$('#tabMap').setAttribute('aria-pressed',v==='map');
   [['list','#navList'],['detail','#navDetail'],['map','#navMap']].forEach(([k,s])=>{const b=$(s);if(k===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
-  if(v==='map')drawMap(true).then(focusSel);
-  if(!mq.matches)scrollTo(0,0);
+  if(v==='map'){renderNear();drawMap(true).then(focusSel)}
+  scrollTo(0,0);
 }
 mq.addEventListener('change',()=>setView(view));
 $('#tabDetail').onclick=()=>setView('detail');
